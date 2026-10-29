@@ -1,0 +1,48 @@
+// quote.proto — контракт QuoteService: мок-криптомонета IGLA (навчальне демо).
+//
+// З нього генеруються:
+//   gen/quote/quote.pb.go       — структури messages
+//   gen/quote/quote_grpc.pb.go  — інтерфейси сервера та клієнтський стаб
+syntax = "proto3";
+
+package quote.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "libratrack/gen/quote";
+
+// ExecuteQuoteRequest — запит виконати поточну котирувку на quantity монет.
+message ExecuteQuoteRequest {
+  string symbol = 1;
+  double quantity = 2;
+}
+
+// Execution — записане виконання: ціна на момент виклику, кількість і сума.
+message Execution {
+  string id = 1;
+  string symbol = 2;
+  double price = 3;
+  double quantity = 4;
+  double total = 5;
+  string status = 6;
+}
+
+// StreamQuotesRequest — підписка на котирування одного символу.
+message StreamQuotesRequest {
+  string symbol = 1;
+}
+
+// Quote — одна котирувка: символ, ціна і час.
+message Quote {
+  string symbol = 1;
+  double price = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+service QuoteService {
+  // Unary: виконати поточну котирувку (бере мок-ціну, записує виконання, повертає його).
+  rpc ExecuteQuote(ExecuteQuoteRequest) returns (Execution);
+
+  // Серверний стрімінг: нова мок-ціна щосекунди, доки клієнт не скасує виклик.
+  rpc StreamQuotes(StreamQuotesRequest) returns (stream Quote);
+}

@@ -12,6 +12,10 @@ proto:   ## перегенерувати gen/inventory з proto/inventory.proto
 	  --go-grpc_out=. --go-grpc_opt=module=libratrack \
 	  --grpc-gateway_out=. --grpc-gateway_opt=module=libratrack \
 	  proto/inventory.proto
+	protoc -I proto \
+	  --go_out=. --go_opt=module=libratrack \
+	  --go-grpc_out=. --go-grpc_opt=module=libratrack \
+	  proto/quote.proto
 
 certs:   ## сертифікати для mTLS
 	go run ./cmd/gencerts

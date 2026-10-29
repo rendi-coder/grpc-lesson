@@ -15,6 +15,7 @@ mTLS, JWT-автентифікацією, тестами та бенчмарко
 7. [Типові проблеми](#7-типові-проблеми)
 8. [Відмінності від слайдів](#8-відмінності-від-слайдів)
 9. [Зв'язок із домашнім завданням](#9-зв'язок-із-домашнім-завданням)
+10. [gRPC demo: QuoteService (IGLA)](#10-grpc-demo-quoteservice-igla)
 
 ---
 
@@ -399,3 +400,21 @@ protoc -I proto -I third_party \
 1. **Сервіс із 3+ методами, один зі стрімінгом.** Скопіюйте структуру: змініть `proto/inventory.proto` під власну предметну область, виконайте `make proto`, реалізуйте методи за зразком `internal/server/server.go`.
 2. **Клієнт і бенчмарк gRPC vs REST.** Візьміть `bench/benchmark_test.go` як шаблон: замініть дані й методи, збережіть умови чесного порівняння (розділ 5).
 3. **`.proto` від ШІ та перевірка.** Попросіть ШІ згенерувати `.proto` за описом і звірте результат із чеклістом слайдів 17 та 37: нумерація полів, нульове значення enum, `stream` лише там, де потрібно, `package` з версією, коректність кодів помилок.
+
+---
+
+## 10. gRPC demo: QuoteService (IGLA)
+
+Окремий мінімальний сервіс для мок-криптомонети **IGLA** (`proto/quote.proto`): unary `ExecuteQuote` і серверний стрімінг `StreamQuotes`.
+Ціна — випадкове блукання навколо 1.00 (не нижче 0.01) у сервісному шарі `internal/quote`; виконання зберігаються в репозиторії в пам'яті за інтерфейсом `Repository`.
+`internal/quoteserver` — тонкий gRPC-адаптер: перетворює proto <-> типи сервісу і помилки на коди (`NotFound` для невідомого символу, `InvalidArgument` для `quantity <= 0`).
+Адреса — змінна `GRPC_ADDR` (за замовчуванням `:50051`, той самий порт, що й у `inventory-server`, тож запускайте їх по черзі або змініть адресу).
+
+```bash
+make proto                                    # перегенерувати gen/quote (і gen/inventory)
+go run ./cmd/grpc-server                      # термінал 1
+go run ./cmd/grpc-client                      # термінал 2: 5 котирувань, виконання, NotFound, скасування
+
+grpcurl -plaintext -d '{"symbol":"IGLA","quantity":10}' localhost:50051 quote.v1.QuoteService/ExecuteQuote
+grpcurl -plaintext -d '{"symbol":"IGLA"}' localhost:50051 quote.v1.QuoteService/StreamQuotes   # Ctrl+C — зупинити
+```
